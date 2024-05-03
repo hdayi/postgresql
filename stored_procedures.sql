@@ -1,0 +1,70 @@
+----- Stored Procedures -----
+-- Stored Procedures can be executed by an application that has access to your database. 
+-- For example PHP could call for this code to execute.
+-- STORED PROCEDURES CAN ALSO EXECUTE TRANSACTIONS, WHICH YOU CANNOT DO WITH FUNCTIONS. 
+-- Procedures however traditionally can’t return values, but there is a work around with INOUT.
+-- Procedures also CAN’T be called by SELECT. You can execute them with EXECUTE with parameters, or with CALL. 
+-- If a SP doesn’t have parameters it is called static and those with parameters are called dynamic. 
+--     CREATE OR REPLACE PROCEDURE procedure_name(parameters)
+--     AS
+--     $body$
+--     DECLARE
+--      --variables here
+--     BEGIN
+--      -- body here
+--     END;
+--     $body$
+--     LANGUAGE PLPGSQL;
+--
+
+-- Create a sample table that stores customer ids with balances due
+--    CREATE TABLE test.past_due(
+--    id SERIAL PRIMARY KEY,
+--    cust_id INTEGER NOT NULL,
+--    balance NUMERIC(6,2) NOT NULL);
+--
+--
+--    INSERT INTO test.past_due(cust_id, balance)
+--    VALUES
+--    (1, 123.45),
+--    (2, 324.50);
+
+--  SELECT * FROM test.past_due;
+--
+--    CREATE OR REPLACE PROCEDURE test.pr_debt_paid(
+--      past_due_id int,
+--      payment numeric,
+--      INOUT mesaj varchar
+--    )
+--    AS
+--    $body$
+--    DECLARE
+--
+--    BEGIN
+--      UPDATE test.past_due
+--      SET balance = balance - payment
+--      WHERE id = past_due_id;
+--      
+--      mesaj := 'meraba televole';
+--      COMMIT;
+--    END;
+--    $body$
+--    LANGUAGE PLPGSQL;
+
+-- Execute procedure
+--    geri donen deger yok ise boyle cagrilabilir
+--    CALL test.pr_debt_paid(1, 10.00);
+-- geri donen deger icin degisken tanimladiktan sonra bu degiskeni procedure parametre olarak gondermek lazim
+--    DO
+--      $$
+--      DECLARE
+--        mesaj varchar;
+--      BEGIN
+--        CALL test.pr_debt_paid(1, 10.00, mesaj);
+--        RAISE NOTICE '%', mesaj;
+--      END
+--      $$
+--    LANGUAGE PLPGSQL;
+--    SELECT * FROM test.past_due;
+
+

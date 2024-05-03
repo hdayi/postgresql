@@ -1,0 +1,155 @@
+----*************************************--
+--------FUNCTIONS------------
+----*************************************--
+--
+--
+--You can write programs that are similar to traditional programming languages. 
+--There are different types of stored programs. 
+--Stored Functions can be executed by SQL statements. 
+--After creating the function they appear in the functions folder. 
+--You can see info on the function by using properties on the function.
+
+
+
+--$1 refers to 1st parameter and $2 the 2nd
+--The result is passed back as a string
+--CREATE OR REPLACE FUNCTION test.fn_add_ints(int, int) 
+--RETURNS INT AS
+--'
+--SELECT $1 + $2;
+--'
+--LANGUAGE SQL;
+--
+--
+--SELECT test.fn_add_ints(30, 40);
+
+-- state'i null olan bir employee bulup update edelim
+
+--CREATE OR REPLACE FUNCTION test.fn_update_employee_state()
+--RETURNS VOID AS
+--$$
+--  UPDATE test.sales_person
+--	SET state = 'PA'
+--	WHERE state IS NULL
+--$$
+--LANGUAGE SQL;
+--
+--
+--SELECT test.fn_update_employee_state();
+--
+--SELECT * FROM test.sales_person WHERE state IS NULL;
+
+
+----Get Maximum Product Price
+--CREATE OR REPLACE FUNCTION test.fn_max_product_price() 
+--RETURNS numeric as
+--$body$
+--	SELECT MAX(price)
+--	FROM test.item
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_max_product_price();
+----
+----Get Total Value of Inventory
+--CREATE OR REPLACE FUNCTION test.fn_get_value_inventory() 
+--RETURNS numeric as
+--$body$
+--	SELECT SUM(price)
+--	FROM test.item;	
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_get_value_inventory();
+----
+----Get Number of Customers
+--CREATE OR REPLACE FUNCTION test.fn_number_customers() 
+--RETURNS numeric as
+--$body$
+--	SELECT count(*)
+--	FROM test.customer;	
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_number_customers();
+----
+----Get Number of Customers with No Phone
+--CREATE OR REPLACE FUNCTION test.fn_number_customers_no_phone() 
+--RETURNS numeric as
+--$body$
+--	SELECT count(*)
+--	FROM test.customer
+--	WHERE phone is NULL;	
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_number_customers_no_phone();
+
+----Named Parameters
+----Get Number of Customers from Texas using a Named Parameter
+--CREATE OR REPLACE FUNCTION test.fn_get_number_customers_from_state(state_name char(2)) 
+--RETURNS numeric as
+--$body$
+--	SELECT count(*)
+--	FROM test.customer
+--	WHERE state = state_name;	
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_get_number_customers_from_state('TX');
+
+----Get Number of Orders Using Customer Name
+--SELECT COUNT(*)
+--FROM test.sales_order
+--NATURAL JOIN test.customer
+--WHERE customer.first_name = 'Christopher' AND customer.last_name = 'Jones';
+--
+--CREATE OR REPLACE FUNCTION test.fn_get_number_orders_from_customer(cus_fname varchar, cus_lname varchar) 
+--RETURNS numeric as
+--$body$
+--	SELECT COUNT(*)
+--	FROM test.sales_order
+--	NATURAL JOIN test.customer
+--	WHERE customer.first_name = cus_fname AND customer.last_name = cus_lname;	
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_get_number_orders_from_customer('Christopher', 'Jones');
+--SADECE BIR SONUC ISE TABLO ADI
+----Return a Row / Composite for the Latest Order
+----Donus tipi olarak tablonun kendisi 
+--CREATE OR REPLACE FUNCTION test.fn_get_last_order() 
+--RETURNS test.sales_order as
+--$body$
+--	SELECT *
+--	FROM test.sales_order
+--	ORDER BY time_order_taken DESC
+--	LIMIT 1;
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT test.fn_get_last_order();
+--SELECT ( test.fn_get_last_order() ).*; --bu sekilde normal tablo halinde gelir
+--SELECT ( test.fn_get_last_order() ).time_order_taken, ( test.fn_get_last_order() ).purchase_order_number;
+--
+--Get Multiple Rows All Employees in CA
+--
+--SELECT *
+--FROM test.sales_person
+--WHERE state = 'CA';
+--
+--CREATE OR REPLACE FUNCTION test.fn_get_employees_location(loc varchar) 
+--RETURNS SETOF test.sales_person AS
+--$body$
+--	SELECT *
+--	FROM test.sales_person
+--	WHERE state = loc;
+--$body$
+--LANGUAGE SQL;
+--
+--SELECT (test.fn_get_employees_location('CA')).*;
+--Get names and phone number using function results
+--FONKSIYONLARA TABLO MUAMELESI YAPABILIRIZ
+--SELECT first_name, last_name, phone
+--FROM test.fn_get_employees_location('CA');
+

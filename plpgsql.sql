@@ -1,0 +1,394 @@
+--****************************************************--
+--PL/pgSQL--
+--****************************************************--
+--    CREATE OR REPLACE FUNCTION func_name(parameter par_type) 
+--    RETURNS ret_type AS
+--    $body$
+--    BEGIN
+--    --statements
+--    END
+--    $body$
+--    LANGUAGE plpqsql;
+
+
+-- Get Product Price by Name
+--SELECT item.price
+--FROM test.item
+--NATURAL JOIN test.product
+--WHERE product.name = 'Grandview';
+
+-- CREATE OR REPLACE FUNCTION test.fn_get_price_product_name(prod_name varchar) 
+-- RETURNS numeric AS
+-- $body$
+-- 	BEGIN
+-- 	
+-- 	RETURN item.price
+-- 	FROM test.item
+-- 	NATURAL JOIN test.product
+-- 	WHERE product.name = prod_name;
+-- 	
+-- 	END
+-- $body$
+-- LANGUAGE plpgsql;
+-- 
+-- SELECT test.fn_get_price_product_name('Grandview');
+
+
+--USING VARIABLES IN FUNCTIONS
+--Create variables in functions
+--    CREATE OR REPLACE FUNCTION test.fn_get_sum(val1 int, val2 int) 
+--    RETURNS int AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        ans int;
+--      BEGIN
+--        ans := val1 + val2;
+--        RETURN ans;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_get_sum(4,5);
+--ASSIGN VARIABLE VALUE WITH A QUERY
+--Get random number and assign it to a variable
+--BURADA PARAMETRELERI KULLANARAK BIR DEGER ELDE ETTIK
+--VE BUNU BIR DEGISKENE ATADIK VE BU DEGISKENI DONDUK
+--    CREATE OR REPLACE FUNCTION test.fn_get_random_number(min_val int, max_val int) 
+--    RETURNS int AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        rand int;
+--      BEGIN
+--        SELECT random()*(max_val - min_val) + min_val INTO rand;
+--        RETURN rand;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_get_random_number(1, 5);
+
+-- SIMDI STRING DONELIM
+ --Store Rows in Variables & Concat
+--Get random sales person name
+--    CREATE OR REPLACE FUNCTION test.fn_get_random_salesperson() 
+--    RETURNS varchar AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        rand int;
+--        --Use record to store row data
+--        emp record;
+--      BEGIN
+--        --Generate random number
+--        --sadece 5 tane satis temsilcisi var bu yuzden 
+--        SELECT random()*(5 - 1) + 1 INTO rand;
+--        
+--        --Get row data for a random sales person and store in emp
+--        SELECT *
+--        FROM test.sales_person
+--        INTO emp
+--        WHERE id = rand;
+--        
+--        --Concat the first and last name and return it
+--        RETURN CONCAT(emp.first_name, ' ', emp.last_name);
+--        
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_get_random_salesperson();
+
+--IN INOUT and OUT
+
+--These can be used to accept and return multiple values without return
+--    CREATE OR REPLACE FUNCTION test.fn_get_sum_2(IN v1 int, IN v2 int, OUT ans int) AS
+--    $body$
+--      BEGIN
+--        ans := v1 + v2;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_get_sum_2(4,5);
+--
+--  BIRDEN FAZLA DEGER DONMEK YANI OUT KULLANMAK
+--  COK GUZEL BU TABLO GIBI DONUYOR
+--Using Multiple Outs
+-- Get a customer born in given month
+--    CREATE OR REPLACE FUNCTION test.fn_get_cust_birthday(IN the_month int, OUT bd_month int, OUT bd_day int, OUT f_name varchar, OUT l_name varchar) 
+--    AS
+--    $body$
+--      BEGIN
+--        SELECT EXTRACT(MONTH FROM birth_date), EXTRACT(DAY FROM birth_date), 
+--        first_name, last_name 
+--        INTO bd_month, bd_day, f_name, l_name
+--          FROM test.customer
+--          WHERE EXTRACT(MONTH FROM birth_date) = the_month
+--        LIMIT 1;
+--        END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_get_cust_birthday(12);
+--    SELECT ( test.fn_get_cust_birthday(12) ).*;
+--
+--    RETURN QUERY RESULTS
+--Return sales person data using a Query
+-- QUERY SONUCUNU DONERKENKI AYNI SEY
+-- sadece RETURN QUERY ekliyoruz
+--    CREATE OR REPLACE FUNCTION test.fn_get_sales_people() 
+--    RETURNS SETOF test.sales_person AS
+--    $body$
+--      BEGIN
+--        RETURN QUERY
+--        SELECT *
+--        FROM test.sales_person;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT (test.fn_get_sales_people()).*;
+
+--Return Specific Data from Query Using Multiple Tables
+--Get top 10 most expensive products
+--simdi burada sanki bir tablo donuyoruz gibi yaptik ama donecegimiz alanlari biz yazdik
+--    CREATE OR REPLACE FUNCTION test.fn_get_10_expensive_prods() 
+--    RETURNS TABLE (
+--      name varchar,
+--      supplier varchar,
+--      price numeric
+--    ) AS
+--    $body$
+--      BEGIN
+--        RETURN QUERY
+--        SELECT product.name, product.supplier, item.price
+--        FROM test.item
+--        NATURAL JOIN test.product
+--        ORDER BY item.price DESC
+--        LIMIT 10;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT (test.fn_get_10_expensive_prods()).*;
+
+--  IF ELSEIF and ELSE
+--Check order status with IF ELSEIF and ELSE
+--Check order performance with IF ELSEIF and ELSE
+--    CREATE OR REPLACE FUNCTION test.fn_check_month_orders(the_month int) 
+--    RETURNS varchar AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        total_orders int;
+--      BEGIN
+--        --Check total orders
+--        SELECT COUNT(purchase_order_number)
+--          INTO total_orders
+--        FROM test.sales_order
+--        WHERE EXTRACT(MONTH FROM time_order_taken) = the_month;
+--        
+--        --Use conditionals to provide different output
+--        IF total_orders > 5 THEN
+--          RETURN CONCAT(total_orders, ' Orders : Doing Good');
+--        ELSEIF total_orders < 5 THEN
+--          RETURN CONCAT(total_orders, ' Orders : Doing Bad');
+--        ELSE
+--          RETURN CONCAT(total_orders, ' Orders : On Target');
+--        END IF;	
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_check_month_orders(12);
+
+-- CASE Statement
+--Do the same using the case statement
+--Check order performance with IF ELSEIF and ELSE
+--    CREATE OR REPLACE FUNCTION test.fn_check_month_orders(the_month int) 
+--    RETURNS varchar AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        total_orders int;
+--      BEGIN
+--        --Check total orders
+--        SELECT COUNT(purchase_order_number)
+--          INTO total_orders
+--        FROM test.sales_order
+--        WHERE EXTRACT(MONTH FROM time_order_taken) = the_month;
+--        
+--        -- Case executes different code depending on an exact value
+--          -- for total_orders or a range of values
+--        CASE
+--          WHEN total_orders < 1 THEN
+--            RETURN CONCAT(total_orders, ' Orders : Terrible');
+--          WHEN total_orders > 1 AND total_orders < 5 THEN
+--            RETURN CONCAT(total_orders, ' Orders : Get Better');
+--          WHEN total_orders = 5 THEN
+--            RETURN CONCAT(total_orders, ' Orders : On Target');
+--          ELSE
+--            RETURN CONCAT(total_orders, ' Orders : Doing Good');
+--        END CASE;	
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_check_month_orders(11);
+
+
+---- LOOP STATEMENT
+--
+--LOOP
+--	--Statements
+--	EXIT WHEN condition is true;
+--END LOOP;
+--
+---- You can also exit with EXIT; with no condition
+
+--    CREATE OR REPLACE FUNCTION test.fn_loop_test(max_num int) 
+--    RETURNS int AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        j INT DEFAULT 1;
+--        tot_sum INT DEFAULT 0;
+--      BEGIN
+--        LOOP
+--          tot_sum := tot_sum + j;
+--          j := j + 1;
+--          EXIT WHEN j > max_num;
+--        END LOOP;
+--      RETURN tot_sum;
+--    END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--    SELECT test.fn_loop_test(5);
+
+--FOR LOOP
+--Iterates over range of values or data coming from a table. 
+--    FOR counter_name IN start_value .. end_value BY stepping
+--    LOOP
+--      Statements
+--    END LOOP;
+-- You can also count in reverse with FOR i IN REVERSE max_num .. 1 BY 2
+--Sum odd values up to a max number
+--    CREATE OR REPLACE FUNCTION test.fn_for_test(max_num int) 
+--    RETURNS int AS
+--    $body$
+--      --Put variables here
+--      DECLARE
+--        tot_sum INT DEFAULT 0;
+--      BEGIN
+--        FOR i IN 1 .. max_num BY 2
+--        LOOP
+--          tot_sum := tot_sum + i;
+--        END LOOP;
+--      RETURN tot_sum;
+--    END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--SELECT test.fn_for_test(5);
+
+
+-- QUERY SONUCLARI USERINDE FOR LOOP
+-- For Loops with Result Sets Blocks and Raise Notice
+--Use a bloc to test this
+--FONKSIYON YAZMADAN CALISTIRMA ICIN DO 
+--    DO
+--    $$
+--      DECLARE
+--        rec record;
+--      BEGIN
+--        FOR rec IN
+--          SELECT first_name, last_name
+--          FROM test.sales_person
+--          LIMIT 5
+--        LOOP
+--          --Outputs info to Messages
+--          RAISE NOTICE '%, %', rec.first_name, rec.last_name;
+--        END LOOP;
+--      END;
+--    $$
+--    LANGUAGE plpgsql;
+
+-- For Each and Arrays
+--FOREACH var IN ARRAY array_name
+-- Print all values in the array
+--    DO
+--    $body$
+--      DECLARE
+--        arr1 int[] := array[1,2,3];
+--        i int;
+--      
+--      BEGIN
+--        FOREACH i IN ARRAY arr1
+--        LOOP
+--          RAISE NOTICE '%', i;
+--        END LOOP;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--     While Loop
+-- Sums values as long as a condition is true
+--    DO
+--    $body$
+--      DECLARE
+--        j INT DEFAULT 1;
+--        tot_sum INT DEFAULT 0;
+--      
+--      BEGIN
+--        WHILE j <= 10
+--        LOOP
+--          tot_sum := tot_sum + j;
+--          j := j + 1;
+--        END LOOP;
+--        RAISE NOTICE 'SONUC: %', tot_sum;
+--      END;
+--    $body$
+--    LANGUAGE plpgsql;
+--
+--
+--   Continue
+--Prints the odd numbers from 1 to 10
+--    DO
+--    $$
+--      DECLARE
+--        i int DEFAULT 1;
+--      BEGIN
+--        LOOP
+--          i := i + 1;
+--        EXIT WHEN i > 10;
+--        CONTINUE WHEN MOD(i, 2) = 0;
+--        RAISE NOTICE 'Num : %', i;
+--        END LOOP;
+--      END;
+--    $$
+--    LANGUAGE plpgsql;
+--
+--    RETURN INVENTORY VALUE BY SUPPLIER
+--
+--    CREATE OR REPLACE FUNCTION test.fn_get_supplier_value(the_supplier varchar) 
+--    RETURNS varchar AS
+--    $body$
+--    DECLARE
+--    	supplier_name varchar;
+--    	price_sum numeric;
+--    BEGIN
+--    	SELECT product.supplier, SUM(item.price)
+--     	INTO supplier_name, price_sum
+--    	FROM test.product, test.item
+--    	WHERE product.supplier = the_supplier
+--    	GROUP BY product.supplier;
+--    	RETURN CONCAT(supplier_name, ' Inventory Value : $', price_sum);
+--    END;
+--    $body$
+--    LANGUAGE plpgsql;
+--    
+--    SELECT test.fn_get_supplier_value('Nike');
+
